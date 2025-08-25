@@ -65,8 +65,10 @@ GridCorridor Corridor::gridCorridorSwell(Eigen::Vector2f swellPoint){       //�
     return gridCorridor;
 }
 
+//下来优化！！！！
 void Corridor::getFlightCorridor(std::vector<const Node*> _waypoint){   //用迭代器推，在优化点进行栅格膨胀，膨胀结束后进行遍历查找下一个优化点，毕竟飞行走廊的主要任务就是选点和加约束
 
+    std::cout<< "waypoint size:" << _waypoint.size() << std::endl;
     std::vector<const Node*>::iterator it = _waypoint.begin();
 
     // trajPoint.push_back((*it) -> coordinate);    //轨迹点是约束点，而这里的起点和终点是基于栅格坐标的，会有误差
@@ -82,7 +84,7 @@ void Corridor::getFlightCorridor(std::vector<const Node*> _waypoint){   //用迭
             }
             else{   //到终点直接退出循环
                 transGrid2Real();
-                qDebug()<<"飞行走廊搜索完成！\n";
+                std::cout<< "corridor size:" << gridCorridorlist.size() << std::endl;
                 return;
             }
         }
@@ -91,6 +93,10 @@ void Corridor::getFlightCorridor(std::vector<const Node*> _waypoint){   //用迭
 
         optTrajPoint.push_back(((*it) -> coordinate + preNode->coordinate)/2);
     }
+    Eigen::Vector2f swellPoint = (*it)->coordinate;
+    GridCorridor swellCorridor = gridCorridorSwell(swellPoint);
+    gridCorridorlist.push_back(swellCorridor);
+    transGrid2Real();//究极史山，猜猜这里为什么要加一个transGrid2Real()
 }
 
 bool Corridor::checkPointInRect(Eigen::Vector2f coord, GridCorridor corridor){      //基于栅格地图的点在矩阵判定

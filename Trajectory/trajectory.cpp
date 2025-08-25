@@ -20,6 +20,12 @@ Trajectory::Trajectory(std::vector<Eigen::Vector2f> _transPoints, Eigen::Vector2
     }
     std::cout<<"numPath:"<<numPath<<std::endl;
 
+    // if (realCorridorlist.size() != numPath) {
+    //     qDebug() << "FATAL ERROR: Corridor number mismatch! Expected " << numPath
+    //              << " corridors, but got " << realCorridorlist.size() << ".";
+    //     throw std::runtime_error("The number of flight corridors does not match the number of path segments.");
+    // }
+
     flightCorridors = realCorridorlist;
 
     std::vector<float> lengthForPath(numPath);  //必须初始化
@@ -338,7 +344,6 @@ void Trajectory::solveProblem(){
     for(int i = 0; i < nV; i++){
         g[i]  = 0;
     }
-
     qpOASES::real_t* lb = new qpOASES::real_t[nV];  //针对变量的约束向量下界
     // for(int i = 0; i < nV; i++){
     //     lb[i]  = -DBL_MAX;
@@ -370,7 +375,6 @@ void Trajectory::solveProblem(){
     qpOASES::int_t nWSR = 10000000;   //最大重试次数
 
     qpOASES::real_t* xOpt = new qpOASES::real_t[nV];
-
     auto errorcode = solver.init(H,g,A,lb,ub,lbA,ubA,nWSR);
     if(errorcode == qpOASES::SUCCESSFUL_RETURN)
     {
