@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\exampleLP.dir/objects.a
+C:\Users\truelight\Toolchains\mingw64\bin\ar.exe qc CMakeFiles\exampleLP.dir/objects.a @CMakeFiles\exampleLP.dir\objects1.rsp
+C:\Users\truelight\Toolchains\mingw64\bin\c++.exe  -D__NO_COPYRIGHT__ -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles\exampleLP.dir/objects.a -Wl,--no-whole-archive -o bin\exampleLP.exe -Wl,--out-implib,bin\libexampleLP.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\exampleLP.dir\linkLibs.rsp

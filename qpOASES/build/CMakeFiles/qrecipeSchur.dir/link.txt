@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\qrecipeSchur.dir/objects.a
+C:\Users\truelight\Toolchains\mingw64\bin\ar.exe qc CMakeFiles\qrecipeSchur.dir/objects.a @CMakeFiles\qrecipeSchur.dir\objects1.rsp
+C:\Users\truelight\Toolchains\mingw64\bin\c++.exe  -D__NO_COPYRIGHT__ -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles\qrecipeSchur.dir/objects.a -Wl,--no-whole-archive -o bin\qrecipeSchur.exe -Wl,--out-implib,bin\libqrecipeSchur.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\qrecipeSchur.dir\linkLibs.rsp

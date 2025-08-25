@@ -1,0 +1,11 @@
+release/a_star.o
+release/corridor.o
+release/grid_map.o
+release/bezier.o
+release/trajectory.o
+release/obstacle.o
+release/scene.o
+release/main.o
+release/mainwindow.o
+release/moc_scene.o
+release/moc_mainwindow.o
