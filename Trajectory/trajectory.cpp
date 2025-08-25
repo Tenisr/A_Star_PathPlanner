@@ -197,26 +197,26 @@ void Trajectory::getHessian(qpOASES::real_t*& hessianMartrix){
 
     hessianMartrix = new qpOASES::real_t[2*numPath*(order+1)*2*numPath*(order+1)];
 
-    int hessianCols = 2*numPath*(order+1);
-    for(int i = 0; i < numPath; i++){
-        for(int j = 0; j < order+1; j++){
-            int controlPointIndex = i*(order+1)+j;
-            int XIndex = numPath*(order+1);
-            for(int k = 0; k < 2*numPath*(order+1); k++){
-                hessianMartrix[controlPointIndex*hessianCols+k] = MQM(controlPointIndex,k) / std::pow(timeForPath[i],7);
-                hessianMartrix[(XIndex+controlPointIndex)*hessianCols+k] = MQM(XIndex+controlPointIndex,k) / std::pow(timeForPath[i],7);
-                // hessianMartrix[controlPointIndex*hessianCols+k] = MQM(controlPointIndex,k)* timeForPath[i];
-                // hessianMartrix[(XIndex+controlPointIndex)*hessianCols+k] = MQM(XIndex+controlPointIndex,k) *timeForPath[i];
-            }
-        }
-
-    }
-
-    // for(int i = 0; i < 2*numPath*(order+1); i++){
-    //     for(int j = 0; j < 2*numPath*(order+1); j++){
-    //         hessianMartrix[i*2*numPath*(order+1)+j] = MQM(i,j);
+    // int hessianCols = 2*numPath*(order+1);
+    // for(int i = 0; i < numPath; i++){
+    //     for(int j = 0; j < order+1; j++){
+    //         int controlPointIndex = i*(order+1)+j;
+    //         int XIndex = numPath*(order+1);
+    //         for(int k = 0; k < 2*numPath*(order+1); k++){
+    //             hessianMartrix[controlPointIndex*hessianCols+k] = MQM(controlPointIndex,k) / std::pow(timeForPath[i],7);
+    //             hessianMartrix[(XIndex+controlPointIndex)*hessianCols+k] = MQM(XIndex+controlPointIndex,k) / std::pow(timeForPath[i],7);
+    //             // hessianMartrix[controlPointIndex*hessianCols+k] = MQM(controlPointIndex,k)* timeForPath[i];
+    //             // hessianMartrix[(XIndex+controlPointIndex)*hessianCols+k] = MQM(XIndex+controlPointIndex,k) *timeForPath[i];
+    //         }
     //     }
+
     // }
+
+    for(int i = 0; i < 2*numPath*(order+1); i++){
+        for(int j = 0; j < 2*numPath*(order+1); j++){
+            hessianMartrix[i*2*numPath*(order+1)+j] = MQM(i,j);
+        }
+    }
 
     std::cout<<"Hessian Martrix:"<<std::endl;
     for(int i = 0; i < 2*numPath*(order+1); i++){
