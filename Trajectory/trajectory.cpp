@@ -23,7 +23,7 @@ Trajectory::Trajectory(std::vector<Eigen::Vector2f> _transPoints, Eigen::Vector2
     flightCorridors = realCorridorlist;
 
     std::vector<float> lengthForPath(numPath);  //必须初始化
-    timeForPath.resize(lengthForPath.size());
+    timeForPath.resize(numPath);
 
     derivative = 4; //优化目标
     order = 5;  //阶数
@@ -39,28 +39,25 @@ Trajectory::Trajectory(std::vector<Eigen::Vector2f> _transPoints, Eigen::Vector2
 
     }
 
-    std::cout<<"lengthForPath:"<<std::endl;
-    for(uint i = 0; i < lengthForPath.size(); i++){ //注意循环条件是size()不是sizeof()...
-        std::cout<<lengthForPath[i]<<std::endl;
-    }
+    // std::cout<<"lengthForPath:"<<std::endl;
+    // for(uint i = 0; i < lengthForPath.size(); i++){ //注意循环条件是size()不是sizeof()...
+    //     std::cout<<lengthForPath[i]<<std::endl;
+    // }
 
-    std::cout<<"totalLength:"<<totalLength<<std::endl;
+    // std::cout<<"totalLength:"<<totalLength<<std::endl;
 
     for(int i = 0; i < numPath; i++){
         timeForPath[i] = totalTime /  totalLength * lengthForPath[i];
         // std::cout<<"timeForPath"<<timeForPath[i]<<std::endl;
     }
 
-    std::cout<<"timeForPath:"<<std::endl;
-    for(uint i = 0; i < timeForPath.size(); i++){
-        std::cout<<timeForPath[i]<<std::endl;
-    }
+    // std::cout<<"timeForPath:"<<std::endl;
+    // for(uint i = 0; i < timeForPath.size(); i++){
+    //     std::cout<<timeForPath[i]<<std::endl;
+    // }
 
     getQ();//获取Q矩阵
     getM();
-    // if(numPath == 0){
-
-    // }
 }
 
 void Trajectory::getConstraintsMartrix(qpOASES::real_t*& constraintMartrix){    //指针引用
@@ -193,11 +190,27 @@ void Trajectory::getHessian(qpOASES::real_t*& hessianMartrix){
     Eigen::MatrixXd MQM = M.transpose()* Q * M;
 
     hessianMartrix = new qpOASES::real_t[2*numPath*(order+1)*2*numPath*(order+1)];
-    for(int i = 0; i < 2*numPath*(order+1); i++){
-        for(int j = 0; j < 2*numPath*(order+1); j++){
-            hessianMartrix[i*2*numPath*(order+1)+j] = MQM(i,j);
+
+    int hessianCols = 2*numPath*(order+1);
+    for(int i = 0; i < numPath; i++){
+        for(int j = 0; j < order+1; j++){
+            int controlPointIndex = i*(order+1)+j;
+            int XIndex = numPath*(order+1);
+            for(int k = 0; k < 2*numPath*(order+1); k++){
+                hessianMartrix[controlPointIndex*hessianCols+k] = MQM(controlPointIndex,k) / std::pow(timeForPath[i],7);
+                hessianMartrix[(XIndex+controlPointIndex)*hessianCols+k] = MQM(XIndex+controlPointIndex,k) / std::pow(timeForPath[i],7);
+                // hessianMartrix[controlPointIndex*hessianCols+k] = MQM(controlPointIndex,k)* timeForPath[i];
+                // hessianMartrix[(XIndex+controlPointIndex)*hessianCols+k] = MQM(XIndex+controlPointIndex,k) *timeForPath[i];
+            }
         }
+
     }
+
+    // for(int i = 0; i < 2*numPath*(order+1); i++){
+    //     for(int j = 0; j < 2*numPath*(order+1); j++){
+    //         hessianMartrix[i*2*numPath*(order+1)+j] = MQM(i,j);
+    //     }
+    // }
 
     std::cout<<"Hessian Martrix:"<<std::endl;
     for(int i = 0; i < 2*numPath*(order+1); i++){
@@ -253,34 +266,41 @@ void Trajectory::getQ(){    //这里把时间系数写到Q里面
 
     Q.resize(2*numPath*(order+1),2*numPath*(order+1));  //P为xy顺序排列
     Q.setZero();//全部置零，否则没有被qi覆盖到的元素会没被初始化
-    // Q.diagonal().setConstant(100);
-    if(derivative == 4){
-        for(int i = 0; i < numPath; i++)    //索引从0开始
-        {
-            Eigen::MatrixXd Qi = Eigen::MatrixXd::Zero(order+1,order+1);    //Eigen::MatrixXd(order+1, order+1) 创建临时对象，
-                //在这个对象上静态函数调用.Zero()，并不会修改已有对象,而是返回一个新的矩阵
-                //所以这里应该直接调用MatrixXd的方法构造
+    switch(derivative){
+    case 3:{
 
-            int c, r = 0;
-            for(r = 4; r < order+1 ; r++){  //从(4,4)开始
-                for(c = 4; c < order+1 ; c++){
-                    double temp1 = factorial(r)/factorial(r-4);
-                    double temp2 = factorial(c)/factorial(c-4);
-                    double temp = std::pow(timeForPath[i], r + c - 7) / (r-4 + c-4 + 1);
-                    Qi(r,c) = temp * temp1 * temp2 / std::pow(timeForPath[i],7);
-
-                }
-            }
-            std::cout<<"Q" << i << ":\n"<<Qi<<std::endl;
-            Q.block(i*(order+1),i*(order+1),order+1,order+1) = Qi;
-        }
-        Q.block(numPath*(order+1),numPath*(order+1),numPath*(order+1),numPath*(order+1)) = Q.block(0,0,numPath*(order+1),numPath*(order+1));
-
-        Eigen::IOFormat compactFormat(Eigen::StreamPrecision, 1);
-        std::cout<<"QMatrix:\n"<<Q.format(compactFormat)<<std::endl;
     }
-    else{
-        qDebug()<<"目前仅支持痉挛度优化！";    //真有叫这个的物理量啊，这名字也太抽象了
+        case 4:{
+            for(int i = 0; i < numPath; i++)    //索引从0开始
+            {
+                Eigen::MatrixXd Qi = Eigen::MatrixXd::Zero(order+1,order+1);    //Eigen::MatrixXd(order+1, order+1) 创建临时对象，
+                    //在这个对象上静态函数调用.Zero()，并不会修改已有对象,而是返回一个新的矩阵
+                    //所以这里应该直接调用MatrixXd的方法构造
+
+                int c, r = 0;
+                for(r = 4; r < order+1 ; r++){  //从(4,4)开始
+                    for(c = 4; c < order+1 ; c++){
+                        double temp1 = factorial(r)/factorial(r-4);
+                        double temp2 = factorial(c)/factorial(c-4);
+                        double temp = std::pow(timeForPath[i], r + c - 7) / (r-4 + c-4 + 1);
+                        Qi(r,c) = temp * temp1 * temp2 / std::pow(timeForPath[i],7);
+
+                    }
+                }
+                // std::cout<<"Q" << i << ":\n"<<Qi<<std::endl;
+                Q.block(i*(order+1),i*(order+1),order+1,order+1) = Qi;
+            }
+            Q.block(numPath*(order+1),numPath*(order+1),numPath*(order+1),numPath*(order+1)) = Q.block(0,0,numPath*(order+1),numPath*(order+1));
+
+            // Eigen::IOFormat compactFormat(Eigen::StreamPrecision, 1);
+            // std::cout<<"QMatrix:\n"<<Q.format(compactFormat)<<std::endl;
+            break;
+        }
+
+        default:{
+            qDebug()<<"优化目标不存在！";
+            break;
+        }
     }
 };
 void Trajectory::getM(){
@@ -299,7 +319,7 @@ void Trajectory::getM(){
     }
     M.block(numPath*(order+1),numPath*(order+1),numPath*(order+1),numPath*(order+1)) = M.block(0,0,numPath*(order+1),numPath*(order+1));
     Eigen::IOFormat compactFormat(Eigen::StreamPrecision, 1);
-    std::cout<<"MMatrix:\n"<<M.format(compactFormat)<<std::endl;
+    // std::cout<<"MMatrix:\n"<<M.format(compactFormat)<<std::endl;
 };
 
 void Trajectory::solveProblem(){
